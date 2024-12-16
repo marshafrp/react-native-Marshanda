@@ -114,8 +114,12 @@ export default function App() {
             </View>
 
             <View style={{paddingRight:20}}>
+            <TouchableOpacity>
               <Image source={require('./assets/plus.png')} style={{height: 60, width:60, marginTop:10}}></Image>
+            </TouchableOpacity>
+            <TouchableOpacity>
               <Image source={require('./assets/send.png')} style={{height: 60, width:60, paddingTop:10}}></Image>
+            </TouchableOpacity>
             </View>
             </View>
           </View>

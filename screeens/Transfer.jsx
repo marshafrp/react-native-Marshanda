@@ -1,9 +1,77 @@
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, Image, ImageBackground, Button, TouchableOpacity, SafeAreaView, TextInput, number } from 'react-native';
+import { useEffect, useState } from 'react';
+import { StyleSheet, Text, View, ScrollView, Image, ImageBackground, Button, TouchableOpacity, SafeAreaView, TextInput} from 'react-native';
+import { useAuth } from '../context/AuthContext';
+import { fetchData } from '../api/fetchData.mjs';
+import { createTransaction } from '../api/fetchTransaction.mjs';
+import { ActivityIndicator } from 'react-native';
+// import { ActivityIndicator } from 'react-native-web';
 
 export default function Transfer() {
-  const [notes, setNotes] = useState('')
+  const type = 'd';
+  const [from_to, setFromTo] = useState('')
+  const [amount, setAmount] = useState('')
+  const [description, setDescription] = useState('')
+  const [user, setUser] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const data = await fetchData();
+        setUser(data.data);
+      } catch(error) {
+        setError(error.message);
+      } finally {
+        setLoading(false)
+      }
+    };
+    getUser();
+  }, [])
+ 
+  const handleSubmitTransfer = () => {
+    if (!type || !from_to || !amount ) {
+      alert('Validation Error', 'Amount are required');
+      return ;
+    }
+    handleTransfer(type, from_to, amount, description);
+  };
+
+  // const handleSetType = () => {
+  //   setType('d')
+  //   setFromTo('401801')
+  // }
+
+  const handleTransfer = async (type, from_to, amount, description) => {
+    try {
+      const response = await createTransaction(type, from_to, amount, description);
+      //await auth.createTransaction(response.data.token)
+      console.log("Token lagi handle Transfer yaaaa : ", response)
+    } catch (error) {
+      alert('Error', error.message)
+    }
+  };
+
+  if (loading) {
+      return (
+        <View style={styles.loader}>
+          <ActivityIndicator size="large" color="#009B97" />
+          <Text>Loading...</Text>
+        </View>
+      );
+    }
+  
+    if (error) {
+      return (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Error: {error}</Text>
+          <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+            <Text style={{ color: "#009B97", marginTop: 20 }}>Go to Login</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
 
   return (
     //<SafeAreaView style={{backgroundColor: '#f9f6f2'}}>
@@ -22,12 +90,13 @@ export default function Transfer() {
         </View>
 
         {/* */}
-        <View style={{backgroundColor:'#009B97', marginTop:40, height:51, width:450}}>
+        <View style={{backgroundColor:'#009B97', marginTop:40, height:51}}>
           <View style={{flexDirection: 'row', alignContent:'center'}}>
             <Text style={{color:'white', fontSize:15, paddingLeft:40, alignSelf:'center'}}>To: </Text>
             <TextInput
-            style={{fontSize:15, color:'white', alignSelf:'center'}}
-            value={number}
+            style={{fontSize:15, color:'white', alignSelf:'center', width: 200}}
+            value={from_to}
+            onChangeText={setFromTo}
             inputMode='numeric'
             />
           </View>
@@ -41,7 +110,8 @@ export default function Transfer() {
             <Text style={{fontSize:16, width:30}}>IDR</Text>
             <TextInput
             style={styles.input}
-            value={number}
+            value={amount}
+            onChangeText={setAmount}
             inputMode='numeric'
             />
           </View>
@@ -49,7 +119,7 @@ export default function Transfer() {
             <View style={{width:250}}>
           <Text style={{color:"gray", paddingLeft:20, fontSize:12}}>Balance</Text>
           </View>
-          <Text style={{fontSize:12, color:'#009B97'}}>IDR 10.000.000</Text>
+          <Text style={{fontSize:12, color:'#009B97'}}>IDR {user.balance}</Text>
           </View>
         </View>
         </View>
@@ -60,16 +130,16 @@ export default function Transfer() {
           <Text style={{color:"gray", paddingLeft:20, paddingTop:20}}>Notes</Text>
           <TextInput
           style={[styles.notesInput]}
-          value={notes}
+          value={description}
           multiline={true}
           numberOfLines={4}
-          onChangeText={setNotes}
+          onChangeText={setDescription}
         /> 
         </View>
         </View>
 
         <View style={{alignSelf:'center', paddingTop: 100}}>
-        <TouchableOpacity style={{backgroundColor: '#009B97', width:350, height: 40, marginTop: 100, borderRadius: 7, justifyContent:'center'}}>
+        <TouchableOpacity style={{backgroundColor: '#009B97', width:350, height: 40, marginTop: 100, borderRadius: 7, justifyContent:'center'}} onPress={handleSubmitTransfer}>
         <Text style={{color:'white', fontWeight: 'bold', textAlign: 'center'}}>Transfer</Text>
       </TouchableOpacity>
       </View>
@@ -90,7 +160,9 @@ const styles = StyleSheet.create({
     paddingTop:1,
     borderBottomColor: 'gray',
     borderBottomWidth: 0.5,
-    borderEndWidth:280
+    width:280,
+    marginRight: 15,
+    marginLeft:15
   },
   notesInput: {
     fontSize: 12,
